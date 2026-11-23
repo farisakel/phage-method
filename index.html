@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phage editing bench app — 29064 and 29066</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#EFF1ED; --plate:#FFFFFF; --lawn:#E4E7E1; --what:#E9EDE7;
+  --ink:#15181A; --ink2:#545B5E; --ink3:#868C8D;
+  --rule:#D4D8D1; --rule2:#BEC3BB;
+  --kan:#1C6B58; --kansoft:#DCEBE5;
+  --warn:#9D3524;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#15181A; --plate:#1D2123; --lawn:#262B2D; --what:#1F2426;
+    --ink:#E9ECE8; --ink2:#A5ACAC; --ink3:#767D7E;
+    --rule:#303638; --rule2:#444B4D;
+    --kan:#6BC9AE; --kansoft:#1A322C; --warn:#E0836E;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--sans);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.n{font-family:var(--mono);font-weight:500;font-size:.93em;letter-spacing:-.01em;white-space:nowrap}
+
+.bar{position:sticky;top:0;z-index:30;background:var(--ground);border-bottom:1px solid var(--rule)}
+.bar-in{max-width:1100px;margin:0 auto;padding:8px 24px;display:flex;align-items:center;gap:12px}
+.bar-l{font-size:13px;color:var(--ink3);flex:none;text-decoration:none}
+.bar-l:hover{color:var(--ink)}
+.jump{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;flex:1}
+.jump::-webkit-scrollbar{display:none}
+.jump a{font-family:var(--mono);font-size:12px;color:var(--ink2);text-decoration:none;
+  min-width:25px;height:25px;display:grid;place-items:center;border-radius:4px;flex:none;position:relative}
+.jump a:hover{background:var(--lawn);color:var(--ink)}
+.jump a[aria-current="true"]{background:var(--ink);color:var(--ground);font-weight:500}
+.jump a.done:after{content:"";position:absolute;bottom:1px;width:11px;height:2px;background:var(--kan);border-radius:1px}
+:focus-visible{outline:2px solid var(--kan);outline-offset:2px}
+
+.shell{max-width:1100px;margin:0 auto;padding:0 24px}
+.masthead{padding:48px 0 0;max-width:46rem}
+h1{font-size:34px;font-weight:600;line-height:1.14;letter-spacing:-.021em;margin:0 0 10px}
+.standfirst{font-size:19px;color:var(--ink2);margin:0 0 24px;max-width:36rem}
+.howto{font-size:15.5px;color:var(--ink2);border-left:2px solid var(--kan);
+  padding:2px 0 2px 15px;margin:0 0 30px;max-width:34rem}
+
+.band{margin:0 0 10px;max-width:46rem}
+.band svg{display:block;width:100%;height:auto;border-radius:3px}
+.bandcap{font-size:14.5px;color:var(--ink2);margin:11px 0 40px;max-width:34rem}
+
+/* ---- tools ---- */
+.tool{background:var(--plate);border:1px solid var(--rule2);border-radius:10px;
+  padding:20px 22px;margin:0 0 20px;max-width:44rem}
+.tool h3{font-size:19px;font-weight:600;letter-spacing:-.014em;margin:0 0 4px}
+.tool .lede{font-size:15.5px;color:var(--ink2);margin:0 0 16px}
+.row{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:13px;font-weight:600;color:var(--ink2)}
+input[type=number],input[type=date],select{
+  font-family:var(--mono);font-size:15px;color:var(--ink);background:var(--ground);
+  border:1px solid var(--rule2);border-radius:6px;padding:7px 9px;min-width:0;width:100%}
+select{font-family:var(--sans)}
+.fld.w1 input,.fld.w1 select{width:92px}
+.fld.w2 input,.fld.w2 select{width:160px}
+.fld.w3 input,.fld.w3 select{width:250px}
+.seg{display:flex;gap:0;border:1px solid var(--rule2);border-radius:6px;overflow:hidden;width:max-content}
+.seg button{font:inherit;font-size:14px;background:var(--ground);color:var(--ink2);
+  border:0;padding:7px 13px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule2)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--ground);font-weight:450}
+.out{background:var(--kansoft);border-radius:8px;padding:14px 16px;margin:4px 0 0;font-size:15.5px}
+.out ul{margin:0;padding-left:1.1rem}
+.out li{margin:0 0 5px}
+.out .big{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--ink);display:block;margin:0 0 4px}
+.out .note{color:var(--ink2);font-size:14.5px;margin:9px 0 0}
+.out .warn{color:var(--warn);font-weight:450}
+.dayrow{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule2)}
+.dayrow:last-child{border-bottom:0;padding-bottom:0}
+.dayk{font-family:var(--mono);font-size:13.5px;color:var(--ink2);flex:none;width:112px;padding-top:2px}
+.dayv{font-size:15.5px}
+.dayv div{margin:0 0 3px}
+tt{font-family:var(--mono);font-size:.92em}
+
+/* ---- parts & steps ---- */
+.part{display:flex;align-items:baseline;gap:13px;margin:46px 0 4px}
+.part-k{font-family:var(--mono);font-size:12.5px;color:var(--ink3);flex:none}
+.part h2{font-size:19px;font-weight:600;letter-spacing:-.013em;margin:0}
+.part-note{font-size:16px;color:var(--ink2);margin:0 0 6px;max-width:42rem}
+
+.track{position:relative;padding-left:52px}
+.track:before{content:"";position:absolute;left:14px;top:4px;bottom:0;width:1px;background:var(--rule2)}
+.step{position:relative;padding:24px 0 30px;border-bottom:1px solid var(--rule)}
+.step:last-child{border-bottom:0}
+.pin{position:absolute;left:-52px;top:26px;width:29px;height:29px;border-radius:50%;
+  background:var(--plate);border:1px solid var(--rule2);display:grid;place-items:center;
+  font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink2);transition:.15s}
+.step.done .pin{background:var(--kan);border-color:var(--kan);color:var(--ground)}
+.sh{display:flex;align-items:baseline;justify-content:space-between;gap:16px;max-width:39rem;margin:0 0 14px}
+.step h3{font-size:21.5px;font-weight:600;letter-spacing:-.016em;margin:0}
+.prog{font-family:var(--mono);font-size:12.5px;color:var(--ink3);flex:none;padding-top:5px}
+
+.what{background:var(--what);border-radius:7px;padding:15px 18px 7px;margin:0 0 18px;max-width:39rem}
+.what h4{font-size:14px;font-weight:600;color:var(--ink2);margin:0 0 10px}
+.what dl{margin:0}
+.what dt{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);margin:0 0 2px}
+.what dd{margin:0 0 11px;font-size:15.5px;line-height:1.55;color:var(--ink2)}
+.what dd:last-child{margin-bottom:9px}
+
+.prep{font-size:16px;color:var(--ink2);margin:0 0 15px;max-width:40rem}
+.prep strong{color:var(--ink);font-weight:600}
+.do h4{font-size:14px;font-weight:600;color:var(--ink2);margin:0 0 9px}
+.acts{list-style:none;margin:0;padding:0;max-width:40rem;counter-reset:a}
+.acts li{counter-increment:a;display:flex;gap:11px;margin:0 0 3px;font-size:16.5px;
+  padding:4px 0;border-radius:5px}
+.acts input{appearance:none;flex:none;width:19px;height:19px;margin:5px 0 0;cursor:pointer;
+  border:1.5px solid var(--rule2);border-radius:4px;background:var(--plate);position:relative}
+.acts input:checked{background:var(--kan);border-color:var(--kan)}
+.acts input:checked:after{content:"";position:absolute;left:5px;top:2px;width:5px;height:10px;
+  border:solid var(--ground);border-width:0 2px 2px 0;transform:rotate(40deg)}
+.acts label{cursor:pointer}
+.acts label:before{content:counter(a) ". ";font-family:var(--mono);font-size:.86em;color:var(--ink3)}
+.acts input:checked+label{color:var(--ink3)}
+.acts input:checked+label .n{color:var(--ink3)}
+
+.whybox{margin:20px 0 0}
+.whybox h4{font-size:14px;font-weight:600;color:var(--ink2);margin:0 0 9px}
+.why{max-width:38rem;font-size:16px;color:var(--ink2);margin:0 0 11px}
+.why:last-child{margin-bottom:0}
+.why strong{color:var(--ink);font-weight:600}
+.flag{max-width:38rem;background:var(--lawn);border-radius:6px;
+  padding:13px 16px;margin:16px 0 0;font-size:15.5px;color:var(--ink2)}
+.flag strong{color:var(--ink);font-weight:600}
+
+.term{color:inherit;background:none;border:0;padding:0;font:inherit;cursor:pointer;
+  border-bottom:1.5px solid var(--kan)}
+.term:hover{color:var(--kan)}
+.term[aria-expanded="true"]{color:var(--kan);font-weight:450}
+.def{margin:10px 0 14px;padding:0 0 0 15px;border-left:2px solid var(--kan);
+  max-width:38rem;font-size:15.5px;line-height:1.58;color:var(--ink2);animation:op .18s ease-out}
+@keyframes op{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.def{animation:none}}
+.def b{font-family:var(--mono);font-size:.93em;font-weight:500;color:var(--ink);display:block;margin:0 0 3px}
+
+table{border-collapse:collapse;width:100%;max-width:38rem;font-size:15.5px;margin:14px 0 0}
+th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;font-size:14px;color:var(--ink3)}
+td:first-child{font-family:var(--mono);font-size:14px;color:var(--ink2);white-space:nowrap}
+.eq{font-family:var(--mono);font-size:16px;color:var(--ink);margin:0 0 8px}
+
+.coda{max-width:38rem;padding:34px 0 20px;font-size:15.5px;color:var(--ink2)}
+.coda h2{font-size:17px;font-weight:600;color:var(--ink);margin:0 0 9px}
+.coda p{margin:0 0 11px}
+.reset{font:inherit;font-size:14px;background:none;border:1px solid var(--rule2);
+  color:var(--ink2);border-radius:6px;padding:6px 12px;cursor:pointer;margin:0 0 72px}
+.reset:hover{border-color:var(--ink3);color:var(--ink)}
+
+@media (max-width:640px){
+  body{font-size:16.5px}
+  h1{font-size:27px}
+  .masthead{padding-top:32px}
+  .shell{padding:0 16px}
+  .bar-in{padding:8px 16px}
+  .bar-l{display:none}
+  .track{padding-left:32px}
+  .track:before{left:9px}
+  .pin{left:-32px;width:20px;height:20px;font-size:10px;top:28px}
+  .step h3{font-size:19.5px}
+  .what,.tool{padding-left:15px;padding-right:15px}
+  .fld.w3 input,.fld.w3 select,.fld.w2 input,.fld.w2 select{width:100%}
+  .fld{flex:1 1 130px}
+  .dayk{width:84px;font-size:12.5px}
+}
+</style>
+</head>
+<body>
+
+<nav class="bar"><div class="bar-in">
+<a class="bar-l" href="#planner">Planner</a>
+<a class="bar-l" href="#toolbox">Tools</a>
+<div class="jump" id="jump"></div>
+</div></nav>
+
+<div class="shell">
+
+<header class="masthead">
+  <h1>Editing 29064 and 29066 into T7</h1>
+  <p class="standfirst">Nineteen steps, from ordering DNA to racing the edited phage against its ancestor.</p>
+  <p class="howto">Tick actions off as you do them — progress saves in this browser. Any underlined word is a button; press it for an explanation. The planner works out what you have to start the night before, and the tools do the arithmetic.</p>
+</header>
+
+<div class="band">
+<svg viewBox="0 0 700 150" role="img" aria-label="A plaque assay plate: a cloudy bacterial lawn punctured by holes. Stippled holes are turbid, open holes are clear.">
+  <defs><pattern id="stip" width="4" height="4" patternUnits="userSpaceOnUse">
+    <circle cx="1" cy="1" r=".75" fill="var(--rule2)"/></pattern></defs>
+  <rect width="700" height="150" fill="var(--lawn)"/>
+  <g fill="url(#stip)">
+    <circle cx="96" cy="46" r="15"/><circle cx="238" cy="104" r="12"/>
+    <circle cx="372" cy="36" r="13"/><circle cx="492" cy="112" r="16"/>
+    <circle cx="612" cy="54" r="11"/><circle cx="166" cy="124" r="9"/></g>
+  <g fill="var(--plate)">
+    <circle cx="172" cy="68" r="14"/><circle cx="306" cy="88" r="17"/>
+    <circle cx="420" cy="104" r="12"/><circle cx="548" cy="40" r="15"/>
+    <circle cx="646" cy="110" r="13"/><circle cx="52" cy="110" r="10"/>
+    <circle cx="258" cy="34" r="10"/><circle cx="462" cy="62" r="9"/></g>
+  <circle cx="96" cy="46" r="15" fill="none" stroke="var(--rule2)"/>
+  <circle cx="306" cy="88" r="17" fill="none" stroke="var(--ink3)"/>
+</svg>
+<p class="bandcap">What you are counting, all the way through. Each hole is one phage that landed, burst a cell, and ate outward. Stippled holes are <button class="term" data-t="turbid">turbid</button>; open holes are <button class="term" data-t="clear">clear</button>. On a mixed lawn in step 18, that difference is the entire measurement.</p>
+</div>
+
+<!-- ============ PLANNER ============ -->
+<section class="tool" id="planner">
+<h3>What do I start tonight?</h3>
+<p class="lede">Nearly every step needs a culture grown the day before, and some need a plate 24 hours before that. Pick the step and the day you want to run it.</p>
+<div class="row">
+  <div class="fld w3"><label for="p-step">Step I want to run</label>
+    <select id="p-step"></select></div>
+  <div class="fld w2"><label for="p-date">On this day</label>
+    <input type="date" id="p-date"></div>
+</div>
+<div class="row">
+  <div class="fld"><label>Do I already have fresh plates of those strains?</label>
+    <div class="seg" role="group">
+      <button type="button" id="p-yes" aria-pressed="true">Yes, in the fridge</button>
+      <button type="button" id="p-no" aria-pressed="false">No, starting from frozen</button>
+    </div></div>
+</div>
+<div class="out" id="p-out"></div>
+</section>
+
+<!-- ============ PARTS ============ -->
+<div class="part"><span class="part-k">Part 1</span><h2>Design, at a computer</h2></div>
+<p class="part-note">Nothing physical happens yet. You are deciding exactly what DNA to order.</p>
+
+<div class="track">
+
+<section class="step" id="s1"><span class="pin">1</span>
+<div class="sh"><h3>Confirm the guide sequences</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>crRNA oligos</dt><dd>Short DNA sequences that will become the <button class="term" data-t="crrna">guide</button> — the part that tells Cas13a what to destroy. Someone already designed these, so you are checking rather than creating.</dd>
+<dt>T7 reference genome</dt><dd>The published, officially numbered T7 sequence, <span class="n">NC_001604.1</span>. The coordinate system, so that everyone means the same thing by "position 29064".</dd>
+<dt>CK1A-1 consensus</dt><dd>The actual ancestral genome of your evolution experiment. Its numbering runs one or two bases off the reference, which is normal.</dd>
+<dt>Geneious Prime</dt><dd>Sequence software. Opens genomes, stacks sequences on top of each other to compare them, and edits sequences.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Open the crRNA sequences in Geneious.</li>
+<li>Align each against both the T7 reference genome and the CK1A-1 consensus.</li>
+<li>Confirm the sequence matches CK1A-1 exactly across the whole spacer.</li>
+<li>Confirm the four-base <button class="term" data-t="overhang">overhangs</button> are <span class="n">AAAC</span> on oligo 1 and <span class="n">AGCA</span> on oligo 2.</li>
+<li>Confirm oligo 2 is the complement of oligo 1 everywhere except those overhangs.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">The guide's whole job is to recognise <strong>unedited</strong> phage so Cas13a can destroy them. It therefore has to match the ancestral sequence, not the edited one. One wrong base and it either fails to recognise them or targets somewhere else entirely.</p>
+<p class="why">The overhangs are what make the oligo pair slot into the plasmid the right way round in step 7. Wrong overhangs and nothing assembles.</p>
+</div></section>
+
+<section class="step" id="s2"><span class="pin">2</span>
+<div class="sh"><h3>Design the donor sequences</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>HR donor</dt><dd>The piece of DNA carrying your mutation. HR is homologous recombination, the process that copies it into the phage. This is the thing you are designing.</dd>
+<dt>Table of evolving sites</dt><dd>The list from the evolution experiment showing every site that changed and the amino acid change each causes. Use it to confirm your edit does what you think.</dd>
+<dt>Codon usage table</dt><dd>Sharp et al. 1985, for T7. Tells you which of the several codons for an amino acid E. coli reads most easily.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Pull roughly <span class="n">100</span> bases either side of your target base out of CK1A-1 and map it to the reference genome with translation displayed.</li>
+<li>Change the target base. <span class="n">29064 C→T</span> gives A247V; <span class="n">29066 T→C</span> gives F248L. Confirm against the table of evolving sites.</li>
+<li>Add <button class="term" data-t="synonymous">synonymous changes</button> to the three <button class="term" data-t="codon">codons</button> before and three after. Leave the target codon alone.</li>
+<li>Choose <button class="term" data-t="preferred">preferred codons</button>; where two are equally preferred take the transition, <span class="n">A↔G</span> or <span class="n">C↔T</span>.</li>
+<li>Trim to exactly <span class="n">52</span> bases past the outermost change each way — the <button class="term" data-t="arms">homology arms</button>.</li>
+<li>Take the reverse complement as the second strand.</li>
+<li>Add <span class="n">TATC</span> to the front of the forward strand, <span class="n">TCCT</span> to the front of the reverse.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Three jobs happening in one piece of DNA, and they are easy to confuse.</p>
+<p class="why"><strong>The target base</strong> is the mutation you care about. Its codon is left unrecoded so the amino acid change you intended is the only coding change you get.</p>
+<p class="why"><strong>The synonymous changes</strong> are a disguise. Your guide matches the ancestral sequence, so if you changed only the target base the guide would still grip the edited phage and destroy it during enrichment. Six nearby codons changed silently means the guide can no longer recognise it, while the protein stays identical apart from your one intended change.</p>
+<p class="why">They are not assumed harmless. T7's codon usage tracks how abundant each E. coli tRNA is, so synonymous sites here are under real selection. Picking preferred codons biases any effect toward neutral rather than deleterious.</p>
+<p class="why"><strong>The 52-base arms</strong> are handles. They are identical to the phage genome, which is what lets the phage find this DNA and copy from it. No matching arms, no recombination.</p>
+<p class="why">Because 29064 and 29066 sit two bases apart, one design covers both and all three constructs come out of the same recoded window. For the double, the window runs from three codons before the first edit to three codons after the second.</p>
+</div></section>
+
+<section class="step" id="s3"><span class="pin">3</span>
+<div class="sh"><h3>Order</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Oligos</dt><dd>Short pieces of synthetic single-stranded DNA, made to order. They arrive as an invisible dried pellet.</dd>
+<dt>IDT</dt><dd>Integrated DNA Technologies. Delivery is usually a few days.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Order four <button class="term" data-t="oligo">oligos</button> per construct — two for the guide, two for the donor.</li>
+<li>Before submitting, map forward against reverse once more. Identical and overlapping, except <span class="n">TATC</span> at the start of the forward and <span class="n">AGGA</span> at the end of the reverse.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Four and not two, because DNA is double-stranded. Each functional piece needs both strands, which you pair up in step 6.</p>
+<p class="why">That last alignment is your final chance to catch a design error. After it you spend money and about a week of bench time before a mistake would reveal itself.</p>
+</div></section>
+</div>
+
+<div class="part"><span class="part-k">Part 2</span><h2>Building the plasmids</h2></div>
+<p class="part-note">Turning ordered DNA into bacteria that carry it.</p>
+
+<div class="track">
+
+<section class="step" id="s4"><span class="pin">4</span>
+<div class="sh"><h3>Purify the empty vectors</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>pBA559</dt><dd>A <button class="term" data-t="plasmid">plasmid</button> carrying Cas13a and an empty slot for a guide. Chloramphenicol resistant. Addgene <span class="n">#186235</span>.</dd>
+<dt>pBA707</dt><dd>A plasmid with an empty slot for a donor. Kanamycin resistant. Addgene <span class="n">#186238</span>.</dd>
+<dt>Glycerol stocks</dt><dd>Frozen tubes of bacteria carrying each plasmid. The <button class="term" data-t="glystock">glycerol</button> stops ice crystals from killing the cells.</dd>
+<dt>Chloramphenicol, kanamycin</dt><dd><button class="term" data-t="abx">Antibiotics</button>. Each plasmid resists one of them, so adding it kills any cell that lost the plasmid.</dd>
+<dt>QIAprep miniprep kit</dt><dd>Buffers and spin columns that pull plasmid DNA out of bacteria. <span class="n">P1</span> holds the cells, <span class="n">P2</span> bursts them, <span class="n">N3</span> makes the chromosome clump and drop out while the plasmid stays dissolved, <span class="n">PB</span> and <span class="n">PE</span> wash, <span class="n">EB</span> releases the DNA.</dd>
+<dt>Agarose gel</dt><dd>A jelly you push DNA through with electricity. Small pieces travel further, so it shows whether you have DNA and roughly what shape.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Scrape each glycerol stock with a sterile loop without letting it thaw. Streak pBA559 onto <button class="term" data-t="chlplate">LB + chloramphenicol</button>, pBA707 onto <button class="term" data-t="kanplate">LB + kanamycin</button>. <span class="n">37 °C</span>, <span class="n">24 h</span>.</li>
+<li>Loop one <button class="term" data-t="colony">colony</button> into <span class="n">3 mL</span> <button class="term" data-t="lb">LB</button> plus <span class="n">3 µL</span> of the matching 1000× antibiotic. Shake overnight at <span class="n">37 °C</span>.</li>
+<li>Pellet <span class="n">1.5 mL</span> of culture at <span class="n">8,000 rpm</span>, <span class="n">3 min</span>.</li>
+<li>Resuspend in <span class="n">250 µL</span> P1. Add <span class="n">250 µL</span> P2, invert to mix. Add <span class="n">350 µL</span> N3, invert. <strong>Do not vortex.</strong></li>
+<li>Spin <span class="n">15,800 rpm</span>, <span class="n">10 min</span>. Move <span class="n">800 µL</span> of supernatant to a spin column, avoiding the pellet.</li>
+<li>Wash with <span class="n">500 µL</span> PB, then <span class="n">750 µL</span> PE. Spin dry again with the flow-through discarded.</li>
+<li>Elute in <span class="n">50 µL</span> EB after standing <span class="n">1 min</span>. Store at <span class="n">4 °C</span>.</li>
+<li>Run <span class="n">5 µL</span> on a <span class="n">0.8%</span> gel at <span class="n">90 V</span> for <span class="n">45–60 min</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">This has to come first, because the Golden Gate reaction in step 7 needs purified plasmid as an <strong>ingredient</strong>. You cannot paste an insert into a vector you have not got in a tube.</p>
+<p class="why">What you are purifying is the <strong>empty</strong> vector, exactly as it arrived. This is the only miniprep in the whole workflow — once, here, never again.</p>
+<p class="why">The buffers each do one job, and <span class="n">N3</span> is the one that actually separates anything. It is high-salt, which makes the bacterial chromosome clump and fall out of solution while your small circular plasmid stays dissolved. That is why you must not vortex after it: shearing the chromosome releases fragments that come through the column with your plasmid.</p>
+<p class="why">The dry spin matters too. Residual ethanol from PE will inhibit every enzyme you use downstream.</p>
+<p class="why">Expect three or four bands on the gel — supercoiled, nicked and linear forms of the same plasmid. Normal, not contamination.</p>
+</div></section>
+
+<section class="step" id="s5"><span class="pin">5</span>
+<div class="sh"><h3>Make up the oligos</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Your delivered oligos</dt><dd>Dried pellets. Invisible, and light enough to sit on the inside of the cap.</dd>
+<dt>Nuclease-free water</dt><dd>Water with no DNA-chewing enzymes in it. Ordinary water would slowly destroy your oligos.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Spin the tubes <span class="n">30 s</span> before opening them.</li>
+<li>Dissolve to <span class="n">100 µM</span> — <span class="n">40 µL</span> water for a <span class="n">4 nmol</span> order, <span class="n">250 µL</span> for <span class="n">25 nmol</span>. Vortex, spin again.</li>
+<li>Make a <span class="n">1 µM</span> working stock: <span class="n">2 µL</span> of the <span class="n">100 µM</span> into <span class="n">198 µL</span> water.</li>
+<li>Label and store both at <span class="n">−20 °C</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">The volume you add is what sets the concentration, so getting it right here determines everything downstream.</p>
+<p class="why">Spin before opening because the pellet is invisible and can be stuck to the cap. Open without spinning and you can lose the whole order without ever seeing it happen.</p>
+<p class="why">Two concentrations because of risk. The <span class="n">100 µM</span> tube is your archive and you barely touch it. The <span class="n">1 µM</span> tube is what you pipette from daily, so contaminating or finishing it costs almost nothing.</p>
+</div></section>
+
+<section class="step" id="s6"><span class="pin">6</span>
+<div class="sh"><h3>Phosphorylate and anneal</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>T4 PNK</dt><dd>Polynucleotide kinase. Sticks a phosphate group onto the end of DNA.</dd>
+<dt>10× T4 ligase buffer</dt><dd>Used here instead of PNK buffer because it contains the ATP the kinase needs as fuel.</dd>
+<dt>Thermocycler</dt><dd>A programmable heat block. Holds tubes at set temperatures and can ramp slowly between them.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>One PCR tube, <span class="n">50 µL</span>: <span class="n">5 µL</span> of each <span class="n">1 µM</span> oligo, <span class="n">5 µL</span> 10× ligase buffer, <span class="n">1 µL</span> <button class="term" data-t="pnk">T4 PNK</button>, <span class="n">34 µL</span> water.</li>
+<li>Run <span class="n">37 °C / 30 min</span>, <span class="n">65 °C / 20 min</span>, <span class="n">100 °C / 5 min</span>, then ramp to <span class="n">25 °C</span> over <span class="n">15 min</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Two separate things happen in this one tube, which is why the program has four stages.</p>
+<p class="why"><strong>The <span class="n">37 °C</span> hold is phosphorylation.</strong> The kinase adds a phosphate to each oligo end, and <button class="term" data-t="ligase">ligase</button> physically cannot join DNA without it. Skip this and nothing assembles in step 7 — and you would not find out until you saw empty plates.</p>
+<p class="why"><strong>The <span class="n">100 °C</span> and the ramp are <button class="term" data-t="anneal">annealing</button>.</strong> The boil rips the strands fully apart; cooling slowly lets them find each other and zip together straight. Cool too fast and they pair crooked or fold back on themselves, and crooked duplexes will not ligate.</p>
+<p class="why">The <span class="n">65 °C</span> hold kills the kinase so it cannot interfere with the ligation you are about to set up.</p>
+</div></section>
+
+<section class="step" id="s7"><span class="pin">7</span>
+<div class="sh"><h3>Golden Gate assembly</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Restriction enzyme</dt><dd>A protein that cuts DNA at one specific sequence. <button class="term" data-t="bsai">BsaI-HFv2</button> opens pBA559, <button class="term" data-t="bbsi">BbsI</button> opens pBA707. Each leaves overhangs matching your oligos.</dd>
+<dt>T4 DNA ligase</dt><dd>Seals DNA into a continuous strand. The glue.</dd>
+<dt>No-oligo control</dt><dd>The same reaction with your insert left out. Measures how many colonies come from plasmid that never got cut or closed back up empty.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Mix <span class="n">25 µL</span>: <span class="n">50–100 ng</span> plasmid from step 4, <span class="n">2.5 µL</span> 10× ligase buffer, <span class="n">0.5 µL</span> T4 ligase, <span class="n">1.5 µL</span> restriction enzyme, <span class="n">1 µL</span> annealed oligos, water to volume.</li>
+<li>Guide oligos into pBA559 with BsaI-HFv2. Donor oligos into pBA707 with BbsI.</li>
+<li>Set up a <button class="term" data-t="nooligo">no-oligo control</button> alongside every assembly — identical, minus the oligos.</li>
+<li>Run <span class="n">30</span> cycles of <span class="n">37 °C / 5 min</span> and <span class="n">16 °C / 5 min</span>, then <span class="n">60 °C / 5 min</span>, then hold <span class="n">4 °C</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Cut and paste in one tube. The restriction enzyme opens the plasmid, the ligase glues your insert into the gap, and both run at once — which is why the <span class="n">30</span> cycles alternate between the temperature the cutter prefers and the one the glue prefers. The reaction keeps retrying until it succeeds. The <span class="n">60 °C</span> at the end kills the cutter so it cannot reopen what you just built.</p>
+<p class="why"><strong>What changes in this step.</strong> Before it you have two separate things: a short linear piece of DNA with sticky ends, and a closed circular plasmid. After it you have <strong>one circle with your sequence built into it</strong>. The sticky ends are directional, so the insert can only go in one way round.</p>
+<p class="why">The tube is not pure, though. Some plasmids assembled correctly, some never got cut, some got cut and closed back up with nothing inside.</p>
+<p class="why">That is what the no-oligo control is for, and it is the one thing people skip. Since you are not sequencing, <strong>this control is your only evidence the insert went in at all.</strong> If it grows as many colonies as your real plate, every colony you pick is a coin flip. Write the counts down.</p>
+</div></section>
+
+<section class="step" id="s8"><span class="pin">8</span>
+<div class="sh"><h3>Transform</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>NEB 10-beta competent cells</dt><dd>E. coli treated so they will take up loose DNA. <button class="term" data-t="competent">Fragile</button>, sold frozen, useless once warmed or shaken hard.</dd>
+<dt>Outgrowth medium</dt><dd>Rich food for the recovery period after heat shock. LB works too.</dd>
+<dt>Sterile glass beads</dt><dd>Poured onto a plate and shaken to spread liquid evenly, instead of a spreader.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Thaw cells on ice <span class="n">10 min</span>. <span class="n">25 µL</span> per transformation into labelled tubes.</li>
+<li>Add <span class="n">1 µL</span> assembly. Flick four or five times. <strong>Never vortex.</strong> Ice <span class="n">30 min</span>, undisturbed.</li>
+<li><button class="term" data-t="heatshock">Heat shock</button> at exactly <span class="n">42 °C</span> for exactly <span class="n">30 s</span>. Do not mix. Ice <span class="n">5 min</span>.</li>
+<li>Add <span class="n">950 µL</span> room-temperature outgrowth medium. <span class="n">37 °C</span>, <span class="n">250 rpm</span>, <span class="n">60 min</span>.</li>
+<li>Meanwhile warm selective plates to <span class="n">37 °C</span> and set up dilution tubes with <span class="n">198 µL</span> LB each.</li>
+<li>Dilute to <span class="n">10⁻²</span>, then <span class="n">10⁻⁴</span>. Spread <span class="n">50 µL</span> of each with beads. <span class="n">37 °C</span> overnight.</li>
+<li>Plate the no-oligo control the same way, same antibiotic.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Bacteria do not normally take up loose DNA. The cold, then the sudden heat, makes the membrane briefly permeable so the plasmid slips inside.</p>
+<p class="why"><span class="n">30 s</span> is exact because it sits on a knife edge: longer starts killing cells, shorter does not open them.</p>
+<p class="why">No vortexing at any point. Competent cells shear easily and one hard mix can kill the whole tube.</p>
+<p class="why">The <span class="n">60 min</span> recovery is not optional. It lets surviving cells switch on the plasmid's resistance gene <strong>before</strong> they meet the antibiotic. Plate them straight away and even successful transformants die.</p>
+<p class="why">Two dilutions because transformation efficiency varies by orders of magnitude. One of them will give countable, separable colonies.</p>
+</div></section>
+
+<section class="step" id="s9"><span class="pin">9</span>
+<div class="sh"><h3>Purify the transformants and bank them</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>80% glycerol</dt><dd>Mixed 1:1 into culture before freezing, giving <span class="n">40%</span> final. At that concentration the tube never freezes solid.</dd>
+<dt>Cryovials or screw-cap tubes</dt><dd>Snap-cap tubes can pop open in deep cold.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Re-streak an isolated colony onto a fresh selective plate. <span class="n">37 °C</span>, <span class="n">24 h</span>.</li>
+<li>Loop a single colony into <span class="n">3 mL</span> LB plus <span class="n">3 µL</span> antibiotic. Shake overnight.</li>
+<li>Combine <span class="n">500 µL</span> culture with <span class="n">500 µL</span> <span class="n">80%</span> glycerol. Three replicates, labelled 1, 2, 3.</li>
+<li>Store at <span class="n">−20 °C</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">The first plate has your transformant growing right next to untransformed neighbours it was sitting on. Re-streaking separates one cell's descendants from everything else, so the colony you pick is genuinely one clone.</p>
+<p class="why">Glycerol stops ice crystals from forming and shredding the cells. The <span class="n">40%</span> final concentration is deliberate for <span class="n">−20 °C</span>: at that concentration the stock never freezes solid, so you can scrape without thawing. The <span class="n">15–25%</span> recipes are the ones paired with <span class="n">−80 °C</span>.</p>
+<p class="why">Three replicates because freezers fail and tubes get dropped. Mix before pulling your <span class="n">500 µL</span>, and flick a tube that has sat a long time, since a partly liquid stock lets cells settle. Under-sampling is forgiving — reviving needs a few hundred cells out of roughly a billion per millilitre.</p>
+<div class="flag"><strong>This ends Part 2, and you have no sequence confirmation.</strong> Everything downstream assumes the plasmids are correct. A mis-assembled donor would either produce no edits or the wrong edit, and the first sign would be failed plates weeks from now. The no-oligo counts from step 7 are your only evidence.</div>
+</div></section>
+</div>
+
+<div class="part"><span class="part-k">Part 3</span><h2>The phage</h2></div>
+<p class="part-note">Everything from here runs twice over, once in each ancestral background — <button class="term" data-t="t7d2">T7Δ2</button> and <button class="term" data-t="t7plus">T7+</button>. Two parallel versions of every tube, indistinguishable by eye. Label obsessively.</p>
+
+<div class="track">
+
+<section class="step" id="s10"><span class="pin">10</span>
+<div class="sh"><h3>High-titer lysate</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>K-12</dt><dd>Ordinary lab E. coli. No plasmid, no antibiotic needed, and every phage grows on it. The neutral host for everything.</dd>
+<dt>K-12 aliquot</dt><dd>A <span class="n">50 µL</span> pre-portioned tube from <span class="n">−80 °C</span>. This goes in the <strong>flask</strong>.</dd>
+<dt>K-12 overnight</dt><dd>A fresh tube grown overnight, made the day before. This goes in the <strong>lawn</strong>. Different preparation, different job.</dd>
+<dt>T7Δ2 and T7+</dt><dd>Your two ancestral phage. Viruses: they do nothing alone and only replicate inside a living host cell.</dd>
+<dt>T7 storage buffer</dt><dd>A salt solution that keeps phage stable. Diluent instead of LB when you do not want anything growing.</dd>
+<dt>Top agar</dt><dd>LB with only <span class="n">0.7%</span> agar, so it sets soft. Melted in a heat block, mixed with bacteria and phage, poured as a thin layer over a normal plate. The softness is what lets plaques spread.</dd>
+<dt>Chloroform</dt><dd>Dissolves bacterial membranes and kills them. Phage have no membrane, so they survive untouched.</dd>
+</dl></div>
+<p class="prep"><strong>The day before.</strong> Start a K-12 <button class="term" data-t="on">overnight</button> for the lawns. Fill the water bath to the top of the flask base and switch it on, <span class="n">37 °C</span>.</p>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li><span class="n">10 mL</span> LB per autoclaved flask. <strong>Three flasks</strong> — T7Δ2, T7+, uninfected control.</li>
+<li>Thaw a K-12 aliquot. <span class="n">10 µL</span> into every flask, control included.</li>
+<li>Water bath shaker, <span class="n">37 °C</span>, <span class="n">250 rpm</span>, <span class="n">60 min</span>. All three should turn cloudy.</li>
+<li><span class="n">10 µL</span> T7Δ2 into flask one, <span class="n">10 µL</span> T7+ into flask two. Nothing in the control. Label all three.</li>
+<li>Dry shaker, <span class="n">37 °C</span>, <span class="n">250 rpm</span>, <span class="n">60 min</span>. Both infected flasks should clear; another <span class="n">30–60 min</span> if not.</li>
+<li>While they replicate: LB plates out of the fridge, dilution tubes with T7 storage buffer, top agar melting in the heat block.</li>
+<li>From each cleared flask, <span class="n">1 mL</span> into a <span class="n">1.5 mL</span> tube plus <span class="n">50 µL</span> <button class="term" data-t="chloro">chloroform</button>. Two <button class="term" data-t="neat">neat</button> stocks.</li>
+<li>Freezer stock from each: <span class="n">500 µL</span> neat plus <span class="n">500 µL</span> <span class="n">80%</span> glycerol, to <span class="n">−20 °C</span>.</li>
+<li><button class="term" data-t="serial">Serially dilute</button> each lysate.</li>
+<li>Plate at countable dilutions: <span class="n">100 µL</span> K-12 overnight plus phage into <span class="n">3 mL</span> top agar, vortex, flame the neck, pour.</li>
+<li><span class="n">5 min</span> to set, invert, <span class="n">37 °C</span> for <span class="n">24 h</span>. Dilution series to <span class="n">4 °C</span>.</li>
+</ul></div>
+
+<section class="tool" style="margin:20px 0 0;max-width:39rem">
+<h3>Set-up calculator</h3>
+<p class="lede">Everything you need to lay out before you start.</p>
+<div class="row">
+<div class="fld w1"><label for="c-anc">Ancestors</label><input type="number" id="c-anc" value="2" min="1" max="4"></div>
+<div class="fld w1"><label for="c-dil">Dilutions plated each</label><input type="number" id="c-dil" value="3" min="1" max="8"></div>
+</div>
+<div class="out" id="c-out"></div>
+</section>
+
+<div class="whybox"><h4>Why</h4>
+<p class="why">You need a lot of phage up front, because every later step throws most of it away.</p>
+<p class="why">Phage only replicate inside <strong>growing</strong> bacteria, which is why the K-12 gets a <span class="n">60 min</span> head start. Add phage to a culture that is not actively dividing and very little happens.</p>
+<p class="why"><button class="term" data-t="clearing">Clearing</button> is the readout. A cloudy flask is full of bacteria; when the phage have burst them all it goes transparent. The uninfected control is what tells you which thing failed when a flask stays cloudy — as cloudy as the control means the phage sample is bad, not the culture.</p>
+<p class="why">Chloroform kills any bacteria still alive so they cannot keep growing in your tube. <span class="n">50 µL</span> into <span class="n">1 mL</span> is only a <span class="n">5%</span> dilution, so the lysate still counts as neat for the maths.</p>
+<p class="why">The freezer stock matters more than it looks. It is the reference opponent for every competition in Part 4, and all six constructs race against these same two stocks. Regrow one halfway through and you have quietly changed your control.</p>
+<p class="why">The dilution series exists because an undiluted high-titer lysate would clear the entire plate. You need the phage thin enough that each one makes its own countable hole. Several dilutions get plated because you cannot know the titer until you have counted one.</p>
+<div class="flag"><strong>Two different K-12 preparations here, easy to confuse.</strong> The <strong>flask</strong> gets <span class="n">10 µL</span> of a thawed <span class="n">−80 °C</span> aliquot — the host the phage replicates in. The <strong>lawn</strong> gets <span class="n">100 µL</span> of overnight culture — the dense bed your <button class="term" data-t="plaque">plaques</button> punch holes in. The overnight has to be started a day ahead or you cannot plate at all.</div>
+</div></section>
+
+<section class="step" id="s11"><span class="pin">11</span>
+<div class="sh"><h3>Efficiency of plaquing</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Killer host</dt><dd>10-beta carrying your pBA559 construct — Cas13a plus the guide. Destroys phage that still carry the ancestral sequence. Also called the crRNA host.</dd>
+<dt>Empty-pBA559 host</dt><dd>Your control from step 7. Carries Cas13a but <strong>no guide</strong>. Essential here, not a cloning leftover.</dd>
+<dt>aTc</dt><dd>Anhydrotetracycline. The chemical switch that turns Cas13a on. Light sensitive — keep it in foil.</dd>
+<dt>EOP</dt><dd>Efficiency of plaquing. Titer on a restrictive host divided by titer on a permissive one. A low number means strong blocking.</dd>
+</dl></div>
+<p class="prep"><strong>The day before.</strong> Overnights of the <button class="term" data-t="killer">killer host</button> and of the empty-pBA559 control, both <span class="n">3 mL</span> LB plus <span class="n">3 µL</span> chloramphenicol, <strong>no aTc</strong>. Plus a K-12 overnight.</p>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li><button class="term" data-t="titer">Titer</button> each ancestral lysate on a plain K-12 lawn.</li>
+<li>Titer the same lysate on a killer-host lawn, adding <span class="n">3 µL</span> chloramphenicol and <span class="n">3 µL</span> 1000× <button class="term" data-t="atc">aTc</button> to that top agar.</li>
+<li>Do the same again on an empty-pBA559 lawn.</li>
+<li>Calculate <button class="term" data-t="eop">EOP</button> as killer-host titer divided by K-12 titer.</li>
+<li>Repeat for the second ancestor.</li>
+</ul></div>
+
+<section class="tool" style="margin:20px 0 0;max-width:39rem">
+<h3>EOP calculator</h3>
+<p class="lede">Enter the two titers, or the plaque counts and I will work the titers out.</p>
+<div class="row">
+<div class="fld"><label>Input mode</label><div class="seg" role="group">
+<button type="button" id="e-mt" aria-pressed="true">Titers</button>
+<button type="button" id="e-mp" aria-pressed="false">Plaque counts</button>
+</div></div>
+</div>
+<div id="e-titers">
+<div class="row">
+<div class="fld w2"><label for="e-k">Titer on K-12 (PFU/mL)</label><input type="number" id="e-k" value="4e10"></div>
+<div class="fld w2"><label for="e-c">Titer on killer host</label><input type="number" id="e-c" value="2e6"></div>
+</div></div>
+<div id="e-plaques" hidden>
+<div class="row">
+<div class="fld w1"><label for="e-kp">K-12 plaques</label><input type="number" id="e-kp" value="40"></div>
+<div class="fld w1"><label for="e-kd">at 10^</label><input type="number" id="e-kd" value="-8"></div>
+<div class="fld w1"><label for="e-cp">Killer plaques</label><input type="number" id="e-cp" value="20"></div>
+<div class="fld w1"><label for="e-cd">at 10^</label><input type="number" id="e-cd" value="-4"></div>
+<div class="fld w1"><label for="e-v">µL plated</label><input type="number" id="e-v" value="100"></div>
+</div></div>
+<div class="out" id="e-out"></div>
+</section>
+
+<div class="whybox"><h4>Why</h4>
+<p class="why">This is the check on your killer host <strong>before</strong> you depend on it. Unedited phage should barely grow there, so EOP should come out very low. If it comes out near <span class="n">1</span>, Cas13a is not working — wrong plasmid, no aTc, dead guide — and step 14 would enrich nothing at all.</p>
+<p class="why">It also sets the ceiling on enrichment. An EOP of <span class="n">10⁻⁴</span> means roughly <span class="n">10,000</span>-fold selection against unedited phage per round, which tells you whether one round is enough.</p>
+<p class="why"><strong>What the empty pBA559 is for.</strong> It carries Cas13a but no guide, which separates two explanations for a low EOP. If your real killer host blocks hard and the empty one does not, your guide is doing the work. If both block equally hard, Cas13a is killing phage non-specifically and the enrichment in step 14 will not be specific either.</p>
+<p class="why">Given that you are not sequencing, this step carries extra weight. It is the only functional evidence your guide construct is correct.</p>
+<div class="flag">Run this on <strong>both</strong> ancestors. If one gives a high EOP, the guide does not match that genome and editing in it will fail — much better to learn that here than after six editing runs.</div>
+</div></section>
+
+<section class="step" id="s12"><span class="pin">12</span>
+<div class="sh"><h3>Grow on the donor host</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Donor host</dt><dd>10-beta carrying pBA707 with your HR donor in it. The bacteria that hand the mutation to the phage. You have three, one per donor.</dd>
+<dt>Empty-pBA707 host</dt><dd>Your other control from step 7. Phage grown on it go through the same process with no donor present, so anything that later survives the killer host must be an escape mutant.</dd>
+<dt>96-well plate</dt><dd>A tray of small wells, used with a multichannel pipette so you can make eight dilutions at once.</dd>
+</dl></div>
+<p class="prep"><strong>The day before.</strong> Overnights of each <button class="term" data-t="donor">donor host</button> in <span class="n">3 mL</span> LB plus <span class="n">3 µL</span> kanamycin, and one K-12 overnight.</p>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li><span class="n">10 mL</span> LB per flask, one flask per donor and ancestor pair.</li>
+<li><span class="n">1 mL</span> of the matching donor-host overnight into each. The uninfected control gets <span class="n">1 mL</span> K-12 overnight instead.</li>
+<li>Shake <span class="n">1 h</span> at <span class="n">37 °C</span>; another <span class="n">30 min</span> if not cloudy.</li>
+<li><span class="n">10 µL</span> of the <strong>matching</strong> ancestral phage into each. Nothing in the control. Label donor and ancestor both.</li>
+<li>Shake at <span class="n">37 °C</span>, check hourly. Expect clearing around <span class="n">2 h</span>.</li>
+<li><span class="n">1 mL</span> out plus <span class="n">50 µL</span> chloroform. Vortex.</li>
+<li>Dilute across a 96-well row — <span class="n">10 µL</span> into <span class="n">90 µL</span> LB, eight steps, fresh tips every step.</li>
+</ul></div>
+
+<section class="tool" style="margin:20px 0 0;max-width:39rem">
+<h3>Flask planner</h3>
+<div class="row">
+<div class="fld w1"><label for="f-don">Donors</label><input type="number" id="f-don" value="3" min="1" max="12"></div>
+<div class="fld w1"><label for="f-anc">Ancestors</label><input type="number" id="f-anc" value="2" min="1" max="4"></div>
+<div class="fld"><label>Empty-donor controls</label><div class="seg" role="group">
+<button type="button" id="f-cy" aria-pressed="true">Include</button>
+<button type="button" id="f-cn" aria-pressed="false">Skip</button>
+</div></div>
+</div>
+<div class="out" id="f-out"></div>
+</section>
+
+<div class="whybox"><h4>Why</h4>
+<p class="why">This is where the edit actually happens, and the mechanism is worth being clear about. Inside each infected cell, the phage genome and the donor plasmid are in the same space. The <span class="n">52</span>-base arms on the donor are identical to the phage genome, which lets the two line up, and sometimes the phage copies the plasmid's middle section — including your mutation — into itself. That is <button class="term" data-t="hr">homologous recombination</button>: copy-paste guided by matching sequence.</p>
+<p class="why">It is rare. Most phage come out completely unchanged, so what you harvest is mostly ancestral with a small edited fraction mixed in. Expected, not a failure. Separating them is the next two steps' job.</p>
+<p class="why">Kanamycin goes in the overnight because pBA707 carries kanamycin resistance. Without it, a cell that drops the plasmid grows just as fast as one that keeps it, and by morning a large share of your culture would have no donor at all — you would be growing phage on a host with nothing to give them.</p>
+<p class="why">Fresh tips at every dilution step, because carrying over a trace of the previous more concentrated well ruins every dilution after it.</p>
+</div></section>
+
+<section class="step" id="s13"><span class="pin">13</span>
+<div class="sh"><h3>Harvest the mix</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>LB + kanamycin plates</dt><dd>The donor host needs kanamycin to keep its plasmid, so even the plates carry it.</dd>
+<dt>Lacy plate</dt><dd>The stage just before a lawn clears completely — plaques merged, surviving bacteria looking like a net.</dd>
+<dt>Cell scraper or loop</dt><dd>For lifting the whole soft top agar layer off the plate into a tube.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Spot <span class="n">2 µL</span> of each dilution onto LB + kanamycin plates overlaid with top agar holding <span class="n">100 µL</span> donor-host overnight and <span class="n">3 µL</span> kanamycin.</li>
+<li><span class="n">5 min</span> to set, invert, incubate.</li>
+<li>Find the plate that has gone <button class="term" data-t="lacy">lacy</button>. Reproducibly around <span class="n">10⁻⁵</span>.</li>
+<li>Scrape the whole plate into <span class="n">3 mL</span> LB or T7 storage buffer.</li>
+<li>Add chloroform and vortex.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">You want the plate where the phage have eaten nearly all the lawn but not quite. That is the highest yield available while the bacteria were still alive long enough for recombination to have happened.</p>
+<p class="why">Too dilute and you get a few isolated plaques, nowhere near enough phage to carry forward. Too concentrated and the lawn died before much recombination occurred, so yield is high but the edited fraction is low.</p>
+<p class="why">You scrape the whole plate rather than picking plaques because you cannot tell by looking which phage are edited. Take all of them and let selection sort it out.</p>
+</div></section>
+
+<section class="step" id="s14"><span class="pin">14</span>
+<div class="sh"><h3>Enrich on the killer host</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Killer host</dt><dd>Same construct as step 11 — Cas13a plus your guide, on chloramphenicol.</dd>
+<dt>aTc, in the top agar only</dt><dd>Turns Cas13a on at the moment of plating, not during growth.</dd>
+<dt>Enrichment</dt><dd>Using selection to raise the proportion of what you want. You cannot pick edited phage out by hand, so you kill the unedited ones instead.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Grow the killer-host overnight in LB plus chloramphenicol only. <strong>No aTc while growing.</strong></li>
+<li>Dilute the scraped lysate <span class="n">10⁻¹</span> through <span class="n">10⁻⁷</span>.</li>
+<li>Spot <span class="n">2 µL</span> of each onto plates overlaid with top agar holding <span class="n">100 µL</span> killer-host overnight, <span class="n">3 µL</span> chloramphenicol and <span class="n">3 µL</span> 1000× aTc, about <span class="n">5 nM</span> final.</li>
+<li><span class="n">5 min</span> to set, invert, incubate <span class="n">12–16 h</span>.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">This is the filter, and the step the whole design turns on. Cas13a and the guide destroy any phage still carrying the ancestral sequence. Edited phage survive because their recoded window means the guide cannot grip. You go in with a mix and come out with mostly edited.</p>
+<p class="why">aTc is withheld during growth on purpose. Running an active nuclease while you are just growing cells selects for cells that break or silence the system. You turn it on in the plating agar, at the moment you need it.</p>
+<div class="flag">If the induced culture clears slowly or not at all, that is <strong>consistent with enrichment working</strong> rather than failing. Most of the phage you added are being destroyed, so there is little left to replicate. Score isolated plaques, not liquid clearing.</div>
+</div></section>
+
+<section class="step" id="s15"><span class="pin">15</span>
+<div class="sh"><h3>Pick plaques</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Escape mutant</dt><dd>A phage that survived the killer host <strong>without</strong> your edit, by mutating the guide's target site on its own. Looks identical on a plate to a real edit.</dd>
+<dt>Empty-pBA707 lysate</dt><dd>From step 12. Your measured escape background, since nothing in it could have been edited.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Cut out isolated plaques from the enrichment plates.</li>
+<li>Propagate each on the killer host to make a working lysate.</li>
+<li>Spot plate to titer each on both the killer host and K-12.</li>
+<li>Plate the empty-pBA707 lysate on the killer host in parallel, as the escape background.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">A plaque on the killer host means that phage survived. It does not mean it is the phage you designed.</p>
+<p class="why">A phage can also survive by mutating the guide's target site on its own, with no help from your donor. That is an <button class="term" data-t="escape">escape mutant</button>, and on a plate it is indistinguishable from a real edit.</p>
+<p class="why"><strong>Without sequencing you cannot tell them apart directly</strong>, which makes the empty-pBA707 control load-bearing. Phage grown on a host with no donor cannot have been edited, so every plaque it produces on the killer host is an escape mutant by definition. That gives you a background rate — if your donor plates give far more plaques than the empty-donor plates, the excess is real editing.</p>
+<p class="why">It is a rate and not an identification. You will know roughly what fraction of your plaques are genuine, but not which individual isolate is which. Worth raising with your lab if the fitness numbers come out strange.</p>
+</div></section>
+</div>
+
+<div class="part"><span class="part-k">Part 4</span><h2>Measuring fitness</h2></div>
+<p class="part-note">A <button class="term" data-t="compassay">competition assay</button>. Three constructs across two backgrounds is six separate races.</p>
+
+<div class="track">
+
+<section class="step" id="s16"><span class="pin">16</span>
+<div class="sh"><h3>Mix one to one</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Edited lysates</dt><dd>From step 15, one per donor and ancestor pair.</dd>
+<dt>Ancestral freezer stocks</dt><dd>The two glycerol stocks you banked in step 10. The same tubes for every race.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Mix each edited lysate <span class="n">1:1</span> by titer with the ancestral lysate <strong>of its own background</strong>.</li>
+<li>Plate the mixture before any transfer, to measure the actual starting ratio.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">Fitness only means anything relative to something else, so you run a race.</p>
+<p class="why">Starting at <span class="n">1:1</span> leaves the most room to detect a shift in either direction. Start at <span class="n">99:1</span> and a small effect is invisible against the noise.</p>
+<p class="why">The starting ratio gets <strong>measured</strong>, not assumed. Your two lysates were titered separately, possibly on different days, so the real mix is never exactly <span class="n">1:1</span>.</p>
+<div class="flag"><strong>Never cross the backgrounds.</strong> Racing an edited T7+ against a T7Δ2 ancestor measures the difference between two strains, not the effect of your mutation, and the number would be meaningless. The single easiest way to ruin the experiment, and it looks like a labelling slip rather than an error.</div>
+</div></section>
+
+<section class="step" id="s17"><span class="pin">17</span>
+<div class="sh"><h3>Serial transfer</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Serial transfer</dt><dd>Growing a population, then using a little of it to start the next round, repeatedly. The same thing the original evolution experiment did for 250 rounds.</dd>
+<dt>Replicates</dt><dd>Independent repeats of the same race, run side by side. Without them you have no error bars.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li><span class="n">10 µL</span> of mixed lysate into <span class="n">10 mL</span> of exponentially growing host. Incubate until lysis.</li>
+<li>Carry that lysate forward as the inoculum for the next round.</li>
+<li>Repeat for your chosen number of transfers, with independent replicates of every construct.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">One round of growth is not enough to see a small difference. Each transfer compounds it — <span class="n">5%</span> better per round becomes countable after ten rounds.</p>
+<p class="why"><span class="n">10 µL</span> into <span class="n">10 mL</span> is a thousand-fold dilution each round, which keeps the phage growing exponentially instead of running out of hosts and plateauing.</p>
+<p class="why">Replicates because any single race can go oddly by chance. Without them you cannot say whether a difference is real or noise.</p>
+</div></section>
+
+<section class="step" id="s18"><span class="pin">18</span>
+<div class="sh"><h3>Score on mixed lawns</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>Mixed host lawn</dt><dd>Top agar containing <strong>both</strong> K-12 and the killer host. The trick the whole assay depends on.</dd>
+<dt>Turbid and clear plaques</dt><dd>The two readouts. Turbid means the phage could only kill some of the bacteria there; clear means it killed everything.</dd>
+</dl></div>
+<div class="do"><h4>Do this</h4><ul class="acts">
+<li>Plate on a lawn mixing K-12 with the killer host, aTc in the top agar.</li>
+<li>Count turbid and clear plaques separately, before and after the transfers.</li>
+<li>Count at a dilution giving <span class="n">30–300</span> plaques.</li>
+</ul></div>
+<div class="whybox"><h4>Why</h4>
+<p class="why">This is the clever part of the whole design. The lawn is two bacteria at once: K-12, which both phage infect productively, and the killer host, which only edited phage infect productively.</p>
+<p class="why">An ancestral phage lands and can only eat the K-12 cells, so it clears a patchy cloudy hole — <strong>turbid</strong>. An edited phage eats everything, so it clears a clean transparent hole — <strong>clear</strong>. Both genotypes counted on the same plate, by eye, with no sequencing needed.</p>
+<p class="why"><span class="n">30–300</span> is the countable window. Below it, random variation swamps the count. Above it, plaques merge.</p>
+</div></section>
+
+<section class="step" id="s19"><span class="pin">19</span>
+<div class="sh"><h3>Calculate</h3></div>
+<div class="what"><h4>What you're using</h4><dl>
+<dt>R</dt><dd>The ratio of edited phage to ancestral phage. <span class="n">R₀</span> before transfers, <span class="n">Rₜ</span> after.</dd>
+<dt>s</dt><dd>Selection coefficient. How fast one genotype beats another, per round.</dd>
+<dt>W</dt><dd>Relative fitness. The same thing as a multiplier, where <span class="n">1</span> is a tie.</dd>
+<dt>ε</dt><dd>Epistasis. How far the double mutant departs from what the two singles predict.</dd>
+</dl></div>
+<p class="eq">s = ln(R<sub>t</sub> / R<sub>0</sub>) / t</p>
+<p class="eq">W = e<sup>s</sup></p>
+<p class="eq">ε = s<sub>AB</sub> − (s<sub>A</sub> + s<sub>B</sub>)</p>
+<p class="eq">ε = W<sub>AB</sub> − (W<sub>A</sub> × W<sub>B</sub>)</p>
+
+<section class="tool" style="margin:20px 0 0;max-width:39rem">
+<h3>Epistasis calculator</h3>
+<p class="lede">One background at a time. Never mix T7Δ2 numbers with T7+ numbers.</p>
+<div class="row">
+<div class="fld"><label>I have</label><div class="seg" role="group">
+<button type="button" id="x-mr" aria-pressed="true">Plaque ratios</button>
+<button type="button" id="x-ms" aria-pressed="false">s values</button>
+</div></div>
+</div>
+<div id="x-ratios">
+<div class="row">
+<div class="fld w1"><label for="x-t">Transfers</label><input type="number" id="x-t" value="10" min="1"></div>
+</div>
+<div class="row">
+<div class="fld w1"><label for="x-a0">A: start ratio</label><input type="number" id="x-a0" value="1" step="any"></div>
+<div class="fld w1"><label for="x-at">A: end ratio</label><input type="number" id="x-at" value="1.6" step="any"></div>
+<div class="fld w1"><label for="x-b0">B: start</label><input type="number" id="x-b0" value="1" step="any"></div>
+<div class="fld w1"><label for="x-bt">B: end</label><input type="number" id="x-bt" value="1.6" step="any"></div>
+<div class="fld w1"><label for="x-d0">AB: start</label><input type="number" id="x-d0" value="1" step="any"></div>
+<div class="fld w1"><label for="x-dt">AB: end</label><input type="number" id="x-dt" value="0.7" step="any"></div>
+</div></div>
+<div id="x-svals" hidden>
+<div class="row">
+<div class="fld w1"><label for="x-sa">s for A</label><input type="number" id="x-sa" value="0.047" step="any"></div>
+<div class="fld w1"><label for="x-sb">s for B</label><input type="number" id="x-sb" value="0.047" step="any"></div>
+<div class="fld w1"><label for="x-sd">s for AB</label><input type="number" id="x-sd" value="-0.036" step="any"></div>
+</div></div>
+<div class="out" id="x-out"></div>
+</section>
+
+<div class="whybox"><h4>Why</h4>
+<p class="why"><strong>Why the log.</strong> Growth is multiplicative, not additive. Taking logs turns compounding growth into a straight line, so the slope is a single clean number and the assumption of a constant selection coefficient becomes visible as how straight the fit is. Estimate <button class="term" data-t="s">s</button> from the slope across all your time points, not from two.</p>
+<p class="why"><strong>Why both scales.</strong> Additive and multiplicative <button class="term" data-t="eps">epistasis</button> can disagree in sign for large effects, and choosing between them is a modelling assumption rather than something the data decides.</p>
+<p class="why"><strong>Why ε is the whole point.</strong> You measure each single mutant and the double, all against the same ancestor, then ask whether the double performs the way the two singles predict. If 29064 alone gives <span class="n">+5%</span> and 29066 alone gives <span class="n">+5%</span>, additivity predicts about <span class="n">+10%</span>. Measure less and they interfere — negative epistasis, which is what a <button class="term" data-t="dmi">DMI</button> looks like. Measure more and they help each other.</p>
+<p class="why">All three race the <strong>ancestor</strong> and never each other. The mixed-lawn trick can only distinguish edited from ancestral, and the double mutant carries both recoded windows so it escapes either guide — indistinguishable from a single mutant on the same plate. A common opponent is what puts all three genotypes on one scale.</p>
+<div class="flag"><strong>Two epistasis values, one per background.</strong> Compute ε separately for T7Δ2 and T7+, using only the constructs built in that background, and do not pool them. Agreement between the two is a far stronger claim than one number alone — and disagreement is itself a finding, since it would be direct evidence that the interaction depends on genetic context.</div>
+</div></section>
+</div>
+
+<!-- ============ TOOLBOX ============ -->
+<div class="part" id="toolbox"><span class="part-k">Tools</span><h2>Bench arithmetic</h2></div>
+<p class="part-note">The calculations you will need more than once.</p>
+
+<section class="tool">
+<h3>Titer</h3>
+<p class="lede">Count the plaques on a countable plate, and get PFU/mL.</p>
+<div class="row">
+<div class="fld w1"><label for="t-p">Plaques</label><input type="number" id="t-p" value="40" min="0"></div>
+<div class="fld w1"><label for="t-d">Dilution 10^</label><input type="number" id="t-d" value="-8"></div>
+<div class="fld w1"><label for="t-v">µL plated</label><input type="number" id="t-v" value="100" min="1"></div>
+</div>
+<div class="out" id="t-out"></div>
+</section>
+
+<section class="tool">
+<h3>Which dilution should I plate?</h3>
+<p class="lede">If you have a rough idea of the titer, this picks the dilutions that land in the countable window.</p>
+<div class="row">
+<div class="fld w2"><label for="w-t">Expected titer (PFU/mL)</label><input type="number" id="w-t" value="1e10"></div>
+<div class="fld w1"><label for="w-v">µL plated</label><input type="number" id="w-v" value="100" min="1"></div>
+</div>
+<div class="out" id="w-out"></div>
+</section>
+
+<section class="tool">
+<h3>Dilution series</h3>
+<p class="lede">Tube by tube, with the volumes.</p>
+<div class="row">
+<div class="fld"><label>Step size</label><div class="seg" role="group">
+<button type="button" id="d-f100" aria-pressed="true">100-fold</button>
+<button type="button" id="d-f10" aria-pressed="false">10-fold</button>
+</div></div>
+<div class="fld w1"><label for="d-target">Down to 10^</label><input type="number" id="d-target" value="-8" max="-1"></div>
+</div>
+<div class="out" id="d-out"></div>
+</section>
+
+<section class="tool">
+<h3>Top agar and lawns</h3>
+<p class="lede">How much of everything for a batch of plates.</p>
+<div class="row">
+<div class="fld w1"><label for="a-n">Plates</label><input type="number" id="a-n" value="6" min="1"></div>
+<div class="fld w2"><label for="a-host">Lawn host</label><select id="a-host">
+<option value="k12">K-12 — no additives</option>
+<option value="chl">Killer or pBA559 host — chl + aTc</option>
+<option value="kan">Donor host — kanamycin</option>
+<option value="mix">Mixed lawn — K-12 + killer host</option>
+</select></div>
+</div>
+<div class="out" id="a-out"></div>
+</section>
+
+<div class="coda">
+<h2>Where this came from, and what is missing</h2>
+<p>Steps 1 to 11 follow the finished protocol tutorials. Steps 12 to 15 are reconstructed from the rough day notes marked “still a work in process”, and steps 16 to 19 come only from the project outline — there is no written bench protocol for the fitness assay yet. Those later steps are the ones most likely to need correcting.</p>
+<p>Plasmid sequencing is left out throughout, because it is not being done. Two steps carry extra weight as a result: the no-oligo control in step 7, which is the only evidence an insert went in, and the empty-donor control in step 15, which is the only measure of the escape background.</p>
+<p>Still unresolved: the volume plated in step 10, and what Δ2 actually deletes.</p>
+</div>
+<button class="reset" id="reset">Clear all ticked actions</button>
+
+</div>
+
+<script>
+/* ---------------- glossary ---------------- */
+const T={
+turbid:"<b>turbid plaque</b>A cloudy, patchy hole — the phage could only kill some of the bacteria in that spot. On a mixed lawn this is your ancestral phage, which can eat the K-12 but not the killer host.",
+clear:"<b>clear plaque</b>A clean transparent hole — the phage killed everything there. On a mixed lawn this is your edited phage, which eats both bacteria.",
+crrna:"<b>crRNA</b>The guide. A short sequence loaded into Cas13a that tells it what to destroy. Yours matches the ancestral sequence, so Cas13a kills unedited phage and leaves edited ones alone.",
+overhang:"<b>overhang</b>A short single-stranded end, here four bases. It only pairs with a matching overhang, which is what makes the insert go into the plasmid one way round and not backwards.",
+synonymous:"<b>synonymous change</b>A DNA change that does not change the protein, because several codons code for the same amino acid. Silent as far as the protein goes, but it changes the sequence — which is exactly what you need in order to escape the guide.",
+codon:"<b>codon</b>Three DNA bases, read together, specifying one amino acid. Changing the third base of a codon often does not change the amino acid at all.",
+preferred:"<b>preferred codon</b>Of the several codons for one amino acid, the one read by the most abundant tRNA in E. coli. T7's codon usage tracks host tRNA abundance, so synonymous sites here are not truly neutral — picking preferred ones keeps any fitness effect small.",
+arms:"<b>homology arms</b>Stretches of DNA on your donor that are identical to the phage genome, 52 bases each side. They are what lets the phage recognise the donor and copy from it. No matching arms, no recombination.",
+oligo:"<b>oligo</b>Short for oligonucleotide — a short piece of synthetic single-stranded DNA, ordered from a company. Arrives as an invisible dried pellet.",
+plasmid:"<b>plasmid</b>A small circle of DNA, separate from the bacterium's main chromosome. It copies itself whenever the cell divides, so bacteria mass-produce it for you. Usually carries an antibiotic resistance gene so you can kill anything that does not have it.",
+glystock:"<b>glycerol stock</b>Bacteria mixed with glycerol and frozen. The glycerol stops ice crystals from shredding the cells, so the strain keeps for years. This is how strains are archived.",
+abx:"<b>antibiotic selection</b>Each plasmid carries a resistance gene. Put the matching antibiotic in the medium and only cells holding that plasmid can grow, so you never have to wonder whether a culture still has it.",
+colony:"<b>colony</b>One visible lump on a plate. It started as a single cell that divided until there were enough to see, so every cell in it is genetically identical. That is why you always pick single colonies.",
+lb:"<b>LB</b>Lysogeny Broth — the standard liquid food for E. coli. Tryptone, yeast extract, NaCl. Your lab has it premade.",
+chlplate:"<b>LB + chloramphenicol plate</b>Solid medium with chloramphenicol mixed in. Only bacteria carrying chloramphenicol resistance grow — in your case, anything carrying pBA559.",
+kanplate:"<b>LB + kanamycin plate</b>The same idea with a different antibiotic. Selects for pBA707.",
+pnk:"<b>T4 PNK</b>Polynucleotide kinase. Sticks a phosphate group onto the end of DNA. Ligase cannot join anything without it.",
+ligase:"<b>ligase</b>The enzyme that seals two pieces of DNA into one continuous strand. The glue.",
+anneal:"<b>annealing</b>Letting two complementary single strands find each other and pair into a double strand. Done by heating to separate everything, then cooling slowly so they pair correctly.",
+bsai:"<b>BsaI-HFv2</b>The restriction enzyme that opens pBA559. HF is high-fidelity — less cutting at the wrong places.",
+bbsi:"<b>BbsI</b>The restriction enzyme that opens pBA707.",
+nooligo:"<b>no-oligo control</b>The same assembly reaction with your insert left out. Any colonies it produces came from plasmid that never got cut, or that closed back up empty. It tells you what fraction of the colonies on your real plate are junk. Since you are not sequencing, this is your only evidence the insert went in.",
+competent:"<b>competent cells</b>Bacteria treated so they will take up DNA from their surroundings. Fragile, and sold frozen. Normal bacteria will not do this, and a hard vortex destroys the whole tube.",
+heatshock:"<b>heat shock</b>A brief jump to 42 °C that makes the cell membrane temporarily leaky so the plasmid can get in. Exactly 30 seconds: longer kills them, shorter does not open them.",
+t7d2:"<b>T7Δ2</b>One of your two ancestral phage strains. The Δ means a deletion. Which region it deletes, and whether it or T7+ is the actual ancestor of the CK1 lineages, is worth confirming with your lab — your donor arms have to match whichever genome you edit.",
+t7plus:"<b>T7+</b>Your other ancestral strain. The plus is standard phage notation for wild-type.",
+on:"<b>overnight culture</b>A test tube of LB with one strain growing in it, left shaking at 37 °C overnight. Cloudy by morning, around a billion cells per millilitre. Made fresh and used the next day, never stored. This is why a plating day cannot start without having planned the day before.",
+chloro:"<b>chloroform</b>Dissolves bacterial membranes and kills them. Phage have no membrane, so they survive it. Added to a lysate to stop surviving bacteria from growing in the tube. 50 µL into 1 mL is only a 5% dilution, so the lysate still counts as neat.",
+neat:"<b>neat, or 10⁰</b>Undiluted lysate, straight from the flask.",
+serial:"<b>serial dilution</b>Diluting in repeated small steps rather than one big jump, because each step is an accurate pipetting operation and big jumps compound error. 10 µL into 90 µL is a ten-fold step; 10 µL into 990 µL is a hundred-fold step.",
+clearing:"<b>clearing</b>A flask full of bacteria looks cloudy. When phage have burst them all it goes transparent. That visible change is how you know the infection worked, which is why you always keep an uninfected flask to compare against.",
+plaque:"<b>plaque</b>A hole in the lawn. One phage landed there, infected a cell, burst it, and the offspring infected the neighbours until a visible circle of dead bacteria formed. One plaque is one original phage particle — that is what makes counting them a measurement rather than an estimate.",
+killer:"<b>killer host</b>10-beta carrying pBA559, which holds Cas13a plus the guide. Its job is to destroy phage that still carry the old sequence. Also called the crRNA host.",
+donor:"<b>donor host</b>10-beta carrying pBA707 with your HR donor in it. The bacteria that hand the mutation to the phage. You have three, one per donor.",
+titer:"<b>titer</b>How concentrated a lysate is, in PFU/mL — plaque-forming units per millilitre. Measured by diluting until plaques are countable, counting them, then multiplying back up.",
+atc:"<b>aTc</b>Anhydrotetracycline, the chemical switch that turns Cas13a on. Withheld while you grow cells, because running an active nuclease during culture selects for cells that break the system, and added only to the plating agar at the moment you need it. Light sensitive — keep it in foil.",
+eop:"<b>EOP</b>Efficiency of plaquing. Titer on a restrictive host divided by titer on a permissive one. It measures how hard a host blocks a phage, so a low number means strong blocking.",
+hr:"<b>homologous recombination</b>DNA swapping guided by matching sequence. If two pieces of DNA share identical stretches, the cell can line them up and copy the middle of one into the other. Your 52-base arms are those matching stretches.",
+lacy:"<b>lacy</b>The stage just before a lawn clears completely — so many plaques that they have merged and the surviving bacteria look like a net. Uncountable, but the highest-yield plate to harvest phage from.",
+escape:"<b>escape mutant</b>A phage that survived the killer host without your edit, by mutating the guide's target site on its own. Looks identical on a plate to a real edit. Normally you tell them apart by sequencing; without that, the empty-donor control gives you a background rate instead.",
+compassay:"<b>competition assay</b>A race. Put two phage in the same tube, let them compete for the same bacteria, and see who takes over. Count the ratio at the start and at the end. You cannot tell whether a mutation is good or bad from the sequence, so you make the phage compete and watch.",
+s:"<b>selection coefficient</b>How fast one genotype beats another, per round of growth. Positive means winning, negative means losing, zero is a tie.",
+eps:"<b>epistasis</b>How far the double mutant departs from what the two single mutants predict. Zero means they do not interact. Negative means they interfere with each other. Positive means they help each other.",
+dmi:"<b>DMI</b>Dobzhansky–Muller incompatibility. Two alleles that are each fine on their own but bad together. The signature is not the absence of either allele — it is the absence of the genotype carrying both. That is exactly the pattern 29064 and 29066 show in the evolution data, and this experiment is the direct test of it."
+};
+document.querySelectorAll(".term").forEach(function(b){
+  b.setAttribute("type","button");b.setAttribute("aria-expanded","false");
+});
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".term");
+  if(!b)return;
+  var k=b.dataset.t;
+  var host=b.closest("li,dd,p,div.flag,h3")||b.parentElement;
+  var nx=host.nextElementSibling;
+  if(nx&&nx.classList&&nx.classList.contains("def")&&nx.dataset.for===k){
+    nx.remove();b.setAttribute("aria-expanded","false");return;
+  }
+  var d=document.createElement("div");
+  d.className="def";d.dataset.for=k;d.innerHTML=T[k]||"Not defined yet.";
+  host.insertAdjacentElement("afterend",d);
+  b.setAttribute("aria-expanded","true");
+});
+
+/* ---------------- store ---------------- */
+var KEY="phage19";
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return{}}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+var state=load();
+
+/* ---------------- checkboxes + progress ---------------- */
+var steps=[].slice.call(document.querySelectorAll("section.step"));
+var jump=document.getElementById("jump");
+steps.forEach(function(sec,si){
+  var items=[].slice.call(sec.querySelectorAll(".acts li"));
+  var head=sec.querySelector(".sh");
+  var prog=document.createElement("span");
+  prog.className="prog";head.appendChild(prog);
+  items.forEach(function(li,i){
+    var id=sec.id+"_"+i;
+    var cb=document.createElement("input");
+    cb.type="checkbox";cb.id=id;cb.checked=!!state[id];
+    var lab=document.createElement("label");
+    lab.setAttribute("for",id);
+    while(li.firstChild)lab.appendChild(li.firstChild);
+    li.appendChild(cb);li.appendChild(lab);
+    cb.addEventListener("change",function(){
+      state[id]=cb.checked;save(state);tally(sec,si);
+    });
+  });
+  tally(sec,si);
+});
+function tally(sec,si){
+  var cbs=[].slice.call(sec.querySelectorAll(".acts input"));
+  var done=cbs.filter(function(c){return c.checked}).length;
+  var p=sec.querySelector(".prog");
+  if(!cbs.length){p.textContent="";return}
+  p.textContent=done+" / "+cbs.length;
+  var all=done===cbs.length;
+  sec.classList.toggle("done",all);
+  var l=jump.children[si];
+  if(l)l.classList.toggle("done",all);
+}
+document.getElementById("reset").addEventListener("click",function(){
+  state={};save(state);
+  document.querySelectorAll(".acts input").forEach(function(c){c.checked=false});
+  steps.forEach(function(s,i){tally(s,i)});
+});
+
+/* ---------------- jump bar ---------------- */
+steps.forEach(function(s,i){
+  var a=document.createElement("a");
+  a.href="#"+s.id;a.textContent=i+1;
+  a.setAttribute("aria-label","Step "+(i+1)+", "+s.querySelector("h3").textContent);
+  jump.appendChild(a);
+});
+steps.forEach(function(s,i){tally(s,i)});
+var links=[].slice.call(jump.children);
+if("IntersectionObserver" in window){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(!en.isIntersecting)return;
+      var i=steps.indexOf(en.target);
+      links.forEach(function(l,j){l.setAttribute("aria-current",j===i?"true":"false")});
+      var l=links[i];
+      if(l)jump.scrollTo({left:l.offsetLeft-jump.clientWidth/2+14,behavior:"smooth"});
+    });
+  },{rootMargin:"-45% 0px -50% 0px"});
+  steps.forEach(function(s){io.observe(s)});
+}
+
+/* ---------------- planner ---------------- */
+var TITLES=steps.map(function(s){return s.querySelector("h3").textContent});
+var PREP={
+ 4:[{t:"Streak pBA559 and pBA707 glycerol stocks — chl and kan plates",lead:1,plate:1},
+    {t:"Overnight of each, 3 mL LB + 3 µL matching antibiotic",lead:1}],
+ 8:[{t:"Nothing the night before, but warm the selective plates on the day",lead:0}],
+ 9:[{t:"Re-streak transformant colonies onto fresh selective plates",lead:1,plate:1},
+    {t:"Overnight from one colony, 3 mL LB + 3 µL antibiotic",lead:1}],
+ 10:[{t:"K-12 overnight — 3 mL LB, no antibiotic",lead:1},
+     {t:"Fill the water bath and switch it on, 37 °C",lead:0}],
+ 11:[{t:"Streak killer host and empty-pBA559 on chl plates",lead:1,plate:1},
+     {t:"Killer host overnight — 3 mL LB + 3 µL chl, no aTc",lead:1},
+     {t:"Empty-pBA559 overnight — 3 mL LB + 3 µL chl, no aTc",lead:1},
+     {t:"K-12 overnight — no antibiotic",lead:1}],
+ 12:[{t:"Streak each donor host on kan plates",lead:1,plate:1},
+     {t:"Overnight of each donor host — 3 mL LB + 3 µL kan",lead:1},
+     {t:"K-12 overnight",lead:1}],
+ 14:[{t:"Killer host overnight — 3 mL LB + 3 µL chl, no aTc",lead:1,plate:1}],
+ 17:[{t:"Host culture growing, ready for the first transfer",lead:1}],
+ 18:[{t:"K-12 and killer host overnights for the mixed lawns",lead:1,plate:1}]
+};
+var pSel=document.getElementById("p-step"),pDate=document.getElementById("p-date"),
+    pOut=document.getElementById("p-out"),pPlates=true;
+TITLES.forEach(function(t,i){
+  var o=document.createElement("option");o.value=i+1;o.textContent=(i+1)+". "+t;pSel.appendChild(o);
+});
+pSel.value="10";
+var tmr=new Date();pDate.value=new Date(tmr.getTime()+86400000).toISOString().slice(0,10);
+function fmt(d){return d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}
+function plan(){
+  var n=+pSel.value, base=pDate.value?new Date(pDate.value+"T12:00:00"):new Date();
+  var items=PREP[n]||[];
+  var byDay={};
+  items.forEach(function(it){
+    var back=it.lead + (it.plate&&!pPlates?1:0);
+    if(it.plate&&!pPlates)back=Math.max(back,2);
+    var d=new Date(base.getTime()-back*86400000);
+    var k=back+"|"+fmt(d);
+    (byDay[k]=byDay[k]||[]).push(it.t + (it.plate&&!pPlates?" — 24 h on the plate":""));
+  });
+  var keys=Object.keys(byDay).sort(function(a,b){return +b.split("|")[0]-+a.split("|")[0]});
+  var h="";
+  if(!keys.length){
+    h='<span class="big">Nothing to prep</span><div class="note">Step '+n+' needs no culture started in advance. You can do it on the day.</div>';
+  }else{
+    keys.forEach(function(k){
+      var p=k.split("|"), back=+p[0], day=p[1];
+      var lbl = back===0 ? "On the day" : back===1 ? "The day before" : back+" days before";
+      h+='<div class="dayrow"><div class="dayk">'+lbl+'<br>'+day+'</div><div class="dayv">'+
+         byDay[k].map(function(x){return "<div>"+x+"</div>"}).join("")+'</div></div>';
+    });
+    h+='<div class="dayrow"><div class="dayk">Step '+n+'<br>'+fmt(base)+'</div><div class="dayv"><div>'+TITLES[n-1]+'</div></div></div>';
+    var earliest=Math.max.apply(null,keys.map(function(k){return +k.split("|")[0]}));
+    h+='<div class="note">Start '+(earliest===1?"tomorrow's":earliest+" days of")+' prep by '+
+        fmt(new Date(base.getTime()-earliest*86400000))+' or the date slips.</div>';
+  }
+  pOut.innerHTML=h;
+}
+function segPair(aId,bId,fn){
+  var a=document.getElementById(aId),b=document.getElementById(bId);
+  function set(v){a.setAttribute("aria-pressed",v?"true":"false");
+    b.setAttribute("aria-pressed",v?"false":"true");fn(v)}
+  a.addEventListener("click",function(){set(true)});
+  b.addEventListener("click",function(){set(false)});
+}
+segPair("p-yes","p-no",function(v){pPlates=v;plan()});
+pSel.addEventListener("change",plan);pDate.addEventListener("change",plan);
+plan();
+
+/* ---------------- helpers ---------------- */
+function sci(x){
+  if(!isFinite(x)||x<=0)return "—";
+  var e=Math.floor(Math.log10(x)), m=x/Math.pow(10,e);
+  return (Math.round(m*100)/100)+" × 10^"+e;
+}
+function bind(ids,fn){ids.forEach(function(i){var el=document.getElementById(i);
+  if(el)el.addEventListener("input",fn)});fn()}
+
+/* ---------------- step 10 setup ---------------- */
+function setup(){
+  var a=+document.getElementById("c-anc").value||1, d=+document.getElementById("c-dil").value||1;
+  var flasks=a+1, plates=a*d, agar=plates*3, on=plates*100, dtubes=a*4;
+  document.getElementById("c-out").innerHTML=
+  "<ul>"+
+  "<li><tt>"+flasks+"</tt> flasks — "+a+" infected, 1 uninfected control</li>"+
+  "<li><tt>"+flasks*10+" mL</tt> LB for the flasks, <tt>"+flasks*10+" µL</tt> K-12 aliquot total</li>"+
+  "<li><tt>"+a+"</tt> × <tt>50 µL</tt> chloroform, and <tt>"+a+"</tt> glycerol stocks at 500 + 500 µL</li>"+
+  "<li><tt>"+dtubes+"</tt> dilution tubes if you use four 100-fold steps each</li>"+
+  "<li><tt>"+plates+"</tt> plates, <tt>"+agar+" mL</tt> top agar in <tt>"+plates+"</tt> tubes</li>"+
+  "<li><tt>"+on+" µL</tt> of K-12 overnight for the lawns — one 3 mL tube covers it</li>"+
+  "</ul>";
+}
+bind(["c-anc","c-dil"],setup);
+
+/* ---------------- EOP ---------------- */
+var eMode=true;
+function eop(){
+  var k,c,extra="";
+  if(eMode){
+    k=+document.getElementById("e-k").value; c=+document.getElementById("e-c").value;
+  }else{
+    var v=(+document.getElementById("e-v").value||100)/1000;
+    k=(+document.getElementById("e-kp").value)/(v*Math.pow(10,+document.getElementById("e-kd").value));
+    c=(+document.getElementById("e-cp").value)/(v*Math.pow(10,+document.getElementById("e-cd").value));
+    extra='<div class="note">K-12 titer '+sci(k)+' PFU/mL, killer host '+sci(c)+' PFU/mL.</div>';
+  }
+  var r=c/k, msg;
+  if(!isFinite(r)||r<=0){msg="Enter both titers.";r=0}
+  else if(r>0.1) msg='<span class="warn">Near 1 — Cas13a is barely restricting.</span> Check the plasmid, check you added aTc to the top agar, check the guide. Enrichment will not work like this.';
+  else if(r>1e-3) msg="Weak restriction. One round of enrichment may not be enough — plan on two, or find out why it is leaky.";
+  else msg="Strong restriction. About <tt>"+sci(1/r)+"</tt>-fold selection against unedited phage per round, so one round should be plenty.";
+  document.getElementById("e-out").innerHTML=
+    '<span class="big">EOP '+(r?sci(r):"—")+'</span>'+extra+'<div class="note">'+msg+'</div>';
+}
+segPair("e-mt","e-mp",function(v){eMode=v;
+  document.getElementById("e-titers").hidden=!v;
+  document.getElementById("e-plaques").hidden=v;eop()});
+bind(["e-k","e-c","e-kp","e-kd","e-cp","e-cd","e-v"],eop);
+
+/* ---------------- flask planner ---------------- */
+var fCtl=true;
+function flasks(){
+  var d=+document.getElementById("f-don").value||1, a=+document.getElementById("f-anc").value||1;
+  var main=d*a, ctl=fCtl?a:0, total=main+ctl+1;
+  document.getElementById("f-out").innerHTML="<ul>"+
+  "<li><tt>"+total+"</tt> flasks total — <tt>"+main+"</tt> donor × ancestor"+
+    (ctl?", <tt>"+ctl+"</tt> empty-donor control":"")+", 1 uninfected</li>"+
+  "<li><tt>"+total*10+" mL</tt> LB, <tt>"+(main+ctl)+" mL</tt> of donor-host overnight, <tt>1 mL</tt> K-12 overnight</li>"+
+  "<li><tt>"+(main+ctl)*10+" µL</tt> of phage across all flasks, 10 µL each</li>"+
+  "<li><tt>"+(main+ctl)+"</tt> × <tt>50 µL</tt> chloroform, <tt>"+(main+ctl)+"</tt> dilution rows on the 96-well plate</li>"+
+  (total>7?'<li class="warn">That is a lot for one sitting. Consider one ancestor at a time.</li>':"")+
+  "</ul>";
+}
+segPair("f-cy","f-cn",function(v){fCtl=v;flasks()});
+bind(["f-don","f-anc"],flasks);
+
+/* ---------------- epistasis ---------------- */
+var xMode=true;
+function eps(){
+  var sa,sb,sd,t=+document.getElementById("x-t").value||1,extra="";
+  if(xMode){
+    function s(a,b){var r0=+document.getElementById(a).value,rt=+document.getElementById(b).value;
+      return (r0>0&&rt>0)?Math.log(rt/r0)/t:NaN}
+    sa=s("x-a0","x-at");sb=s("x-b0","x-bt");sd=s("x-d0","x-dt");
+    extra='<div class="note">s per transfer — A <tt>'+sa.toFixed(4)+'</tt>, B <tt>'+sb.toFixed(4)+'</tt>, AB <tt>'+sd.toFixed(4)+'</tt>.</div>';
+  }else{
+    sa=+document.getElementById("x-sa").value;sb=+document.getElementById("x-sb").value;
+    sd=+document.getElementById("x-sd").value;
+  }
+  if([sa,sb,sd].some(isNaN)){document.getElementById("x-out").innerHTML="Fill in all six ratios.";return}
+  var ea=sd-(sa+sb), Wa=Math.exp(sa),Wb=Math.exp(sb),Wd=Math.exp(sd), em=Wd-Wa*Wb;
+  var verdict;
+  if(ea<-0.01) verdict=(sa>=-0.005&&sb>=-0.005)
+    ? "<strong>This is the DMI signature.</strong> Both singles are at or above the ancestor, the double is well below what they predict. The mutations interfere with each other."
+    : "Negative epistasis — the double underperforms the prediction. But at least one single is already deleterious, so this is not a clean DMI.";
+  else if(ea>0.01) verdict="Positive epistasis — the double does better than the two singles predict. They help each other.";
+  else verdict="Additive, within noise. The mutations do not interact, so whatever kept the double mutant out of the evolution experiment was not interference between them.";
+  document.getElementById("x-out").innerHTML=
+    '<span class="big">ε = '+ea.toFixed(4)+'</span>'+
+    '<div class="note">Additive scale. Multiplicative gives ε = <tt>'+em.toFixed(4)+'</tt>. '+
+    'Fitnesses: W<sub>A</sub> <tt>'+Wa.toFixed(3)+'</tt>, W<sub>B</sub> <tt>'+Wb.toFixed(3)+'</tt>, '+
+    'W<sub>AB</sub> <tt>'+Wd.toFixed(3)+'</tt>, predicted W<sub>AB</sub> <tt>'+(Wa*Wb).toFixed(3)+'</tt>.</div>'+
+    extra+'<div class="note">'+verdict+'</div>';
+}
+segPair("x-mr","x-ms",function(v){xMode=v;
+  document.getElementById("x-ratios").hidden=!v;
+  document.getElementById("x-svals").hidden=v;eps()});
+bind(["x-t","x-a0","x-at","x-b0","x-bt","x-d0","x-dt","x-sa","x-sb","x-sd"],eps);
+
+/* ---------------- titer ---------------- */
+function titer(){
+  var p=+document.getElementById("t-p").value, d=+document.getElementById("t-d").value,
+      v=(+document.getElementById("t-v").value||100)/1000;
+  var x=p/(v*Math.pow(10,d));
+  var note = p<30 ? '<span class="warn">Under 30 plaques — too few to trust. Use a less dilute plate.</span>'
+    : p>300 ? '<span class="warn">Over 300 — plaques merge at that density. Use a more dilute plate.</span>'
+    : "In the countable window.";
+  document.getElementById("t-out").innerHTML=
+    '<span class="big">'+sci(x)+' PFU/mL</span><div class="note">'+p+' ÷ ('+
+    (v*1000)+' µL × 10^'+d+'). '+note+'</div>';
+}
+bind(["t-p","t-d","t-v"],titer);
+
+/* ---------------- which dilution ---------------- */
+function which(){
+  var x=+document.getElementById("w-t").value, v=(+document.getElementById("w-v").value||100)/1000;
+  if(!(x>0)){document.getElementById("w-out").innerHTML="Enter a titer.";return}
+  var rows="",best=[];
+  for(var e=-1;e>=-11;e--){
+    var n=x*v*Math.pow(10,e);
+    if(n>=15&&n<=600){
+      var tag = (n>=30&&n<=300) ? "countable" : "borderline";
+      best.push({e:e,n:n,tag:tag});
+    }
+  }
+  if(!best.length){document.getElementById("w-out").innerHTML=
+    '<div class="note">Nothing lands in range with '+(v*1000)+' µL plated. Change the volume.</div>';return}
+  best.forEach(function(b){
+    rows+="<li><tt>10^"+b.e+"</tt> → about <tt>"+Math.round(b.n)+"</tt> plaques — "+b.tag+"</li>";
+  });
+  document.getElementById("w-out").innerHTML="<ul>"+rows+"</ul>"+
+    '<div class="note">Plate two or three of these. You cannot know the titer until you have counted one, so bracket it.</div>';
+}
+bind(["w-t","w-v"],which);
+
+/* ---------------- dilution series ---------------- */
+var dFac=100;
+function dil(){
+  var target=+document.getElementById("d-target").value;
+  if(target>=0){document.getElementById("d-out").innerHTML="Target has to be negative.";return}
+  var per=dFac===100?2:1, steps=Math.round(Math.abs(target)/per);
+  if(steps*per!==Math.abs(target)){
+    document.getElementById("d-out").innerHTML=
+      '<div class="note"><span class="warn">10^'+target+' is not reachable in whole '+dFac+'-fold steps.</span> '+
+      'Use 10-fold steps, or pick an even exponent.</div>';return;
+  }
+  var xfer=10, dilu=dFac===100?990:90, rows="";
+  for(var i=1;i<=steps;i++){
+    var exp=-i*per;
+    rows+="<li>Tube "+i+" — <tt>"+xfer+" µL</tt> from "+(i===1?"the neat lysate":"tube "+(i-1))+
+          " into <tt>"+dilu+" µL</tt> diluent → <tt>10^"+exp+"</tt></li>";
+  }
+  document.getElementById("d-out").innerHTML="<ul>"+rows+"</ul>"+
+    '<div class="note"><tt>'+steps+'</tt> tubes, <tt>'+(steps*dilu/1000).toFixed(2)+' mL</tt> of diluent in total. '+
+    'Mix each tube before taking from it, and change tips every step.</div>';
+}
+segPair("d-f100","d-f10",function(v){dFac=v?100:10;dil()});
+bind(["d-target"],dil);
+
+/* ---------------- top agar ---------------- */
+function agar(){
+  var n=+document.getElementById("a-n").value||1, h=document.getElementById("a-host").value;
+  var li="<li><tt>"+n+"</tt> tubes of <tt>3 mL</tt> top agar — <tt>"+(n*3)+" mL</tt> total, melted in the heat block</li>";
+  if(h==="mix"){
+    li+="<li><tt>"+(n*50)+" µL</tt> K-12 overnight plus <tt>"+(n*50)+" µL</tt> killer-host overnight — 50 µL of each per tube</li>"+
+        "<li><tt>"+(n*3)+" µL</tt> chloramphenicol and <tt>"+(n*3)+" µL</tt> 1000× aTc</li>";
+  }else{
+    li+="<li><tt>"+(n*100)+" µL</tt> of the host overnight — 100 µL per tube</li>";
+    if(h==="chl")li+="<li><tt>"+(n*3)+" µL</tt> chloramphenicol and <tt>"+(n*3)+" µL</tt> 1000× aTc</li>";
+    if(h==="kan")li+="<li><tt>"+(n*3)+" µL</tt> kanamycin, and kanamycin plates underneath</li>";
+    if(h==="k12")li+="<li>No antibiotic, no aTc. Plain LB plates underneath</li>";
+  }
+  li+="<li>Vortex, flame the neck, pour, <tt>5 min</tt> to set, then invert</li>";
+  document.getElementById("a-out").innerHTML="<ul>"+li+"</ul>";
+}
+bind(["a-n","a-host"],agar);
+</script>
+</body>
+</html>
